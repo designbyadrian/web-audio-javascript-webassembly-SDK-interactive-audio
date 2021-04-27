@@ -44,10 +44,16 @@ class MyProcessor extends SuperpoweredWebAudio.AudioWorkletProcessor {
         //     for (let n = 0; n < buffersize * 2; n++) outputBuffer.array[n] = 0;
         // };
 
+        let mix = false;
+
         Object.keys(players).forEach((key, idx) => {
             const { player } = players[key];
 
-            if (!player.processStereo(outputBuffer.pointer, idx > 0, buffersize, 1)) {
+            const hasAudioOutput = player.processStereo(outputBuffer.pointer, mix, buffersize, 1);
+
+            mix |= hasAudioOutput;
+
+            if (!hasAudioOutput) {
                 for (let n = 0; n < buffersize * 2; n++) outputBuffer.array[n] = 0;
             };
         })
