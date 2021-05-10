@@ -25,6 +25,14 @@ function playNote(e) {
     audioNode.sendMessageToAudioScope({ play:this.value });
 }
 
+function playKey({key}) {
+    const note = notes.filter(note => note.key === key)[0];
+
+    if (note) {
+        audioNode.sendMessageToAudioScope({ play:note.url });
+    }
+}
+
 function onMessageFromAudioScope(message) {
     if (message.loaded) {
         // UI: innerHTML may be ugly but keeps this example small
@@ -38,8 +46,10 @@ function onMessageFromAudioScope(message) {
         content.innerHTML = html;
 
         for (const node of document.getElementsByClassName('btn-note')) {
-            node.addEventListener('click', playNote);
+            node.addEventListener('mousedown', playNote);
+            node.addEventListener('touchstart', playNote);
         }
+        document.addEventListener('keydown', playKey);
 
         webaudioManager.audioContext.resume();
 
