@@ -9,8 +9,8 @@ class MyProcessor extends SuperpoweredWebAudio.AudioWorkletProcessor {
     onReady() {
         notes.forEach(({url}) => {
             const player = new this.Superpowered.AdvancedAudioPlayer(this.samplerate, 2, 2, 0, 0.501, 2, false);
-
-            players[url] = { player, loaded: false };
+            //player.outputBugger = new Superpowered.Float32Buffer(256);
+            players[url] = player;
             SuperpoweredTrackLoader.downloadAndDecode(url, this);
         })
     }
@@ -18,42 +18,37 @@ class MyProcessor extends SuperpoweredWebAudio.AudioWorkletProcessor {
     onMessageFromMainScope(message) {
         if (message.SuperpoweredLoaded) {
             const { buffer, url } = message.SuperpoweredLoaded;
+            const player = players[url];
 
-            players[url].loaded = true;
-            players[url].pointer = this.Superpowered.arrayBufferToWASM(buffer);
+            const pointer = this.Superpowered.arrayBufferToWASM(buffer);
 
-            const { player } = players[url];
+            player.openMemory(pointer, false, false);
 
+            player.loaded = true;
             if (Object.keys(players).every(k => players[k].loaded)) {
                 this.sendMessageToMainScope({ loaded: true });
             }
         }
 
         if (message.play) {
-            const { player, pointer } = players[message.play];
-            player.openMemory(pointer, false, false);
+            const player = players[message.play];
+            player.seek(0);
             player.play();
         }
     }
 
     processAudio(inputBuffer, outputBuffer, buffersize, parameters) {
-
-        // const { player } = players['../notes/c3.mp3'];
-
-        // if (!player.processStereo(outputBuffer.pointer, false, buffersize, 1)) {
-        //     for (let n = 0; n < buffersize * 2; n++) outputBuffer.array[n] = 0;
-        // };
-
         let mix = false;
 
         Object.keys(players).forEach((key, idx) => {
-            const { player } = players[key];
+            const player = players[key];
 
+            // outputBuffer.pointer -> player.outputBuffer
             const hasAudioOutput = player.processStereo(outputBuffer.pointer, mix, buffersize, 1);
 
             mix |= hasAudioOutput;
 
-            if (!hasAudioOutput) {
+            if (!mix) {
                 for (let n = 0; n < buffersize * 2; n++) outputBuffer.array[n] = 0;
             };
         })
