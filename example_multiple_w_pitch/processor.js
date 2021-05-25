@@ -52,11 +52,10 @@ class MyProcessor extends SuperpoweredWebAudio.AudioWorkletProcessor {
 
             mix |= hasAudioOutput;
 
-            if (!mix) {
-                for (let n = 0; n < buffersize * 2; n++) outputBuffer.array[n] = 0;
-            };
         })
-
+        if (!mix) {
+            for (let n = 0; n < buffersize * 2; n++) outputBuffer.array[n] = 0;
+        };
     }
 }
 
